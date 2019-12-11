@@ -2,6 +2,7 @@ import React from "react";
 import { BrowserRouter as Router, Route } from "react-router-dom";
 import { withFormik, Field, Form } from "formik";
 import * as Yup from "yup";
+import axios from 'axios';
 
 import "./App.css";
 
@@ -43,6 +44,7 @@ const loginForm = props => {
     <Form>
       <Field type="text" name="username" placeholder="Username" />
       <Field type="password" name="password" placeholder="Password" />
+      <button type='submit'>Login</button>
     </Form>
   );
 };
@@ -60,8 +62,17 @@ const FormikLoginForm = withFormik({
     password: Yup.string().required("Password is required to submit form")
   }),
 
-  handleSubmit({username, password}, formikBag) {
-    return;
+  async handleSubmit({ username, password }, formikBag) {
+    const user = {
+      username,
+      password
+    };
+
+    const loginPath = `http://localhost:5000/api/login`
+
+    const promise = axios.post(loginPath, user);
+    const {data} = await promise;
+    localStorage.setItem('token', data.payload);
   }
 })(loginForm);
 
