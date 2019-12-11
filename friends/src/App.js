@@ -63,6 +63,6 @@ const FormikLoginForm = withFormik({
   handleSubmit({username, password}, formikBag) {
     return;
   }
-});
+})(loginForm);
 
 export default App;
