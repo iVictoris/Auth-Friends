@@ -1,15 +1,15 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Route,
   Redirect,
-  Link
+  NavLink
 } from "react-router-dom";
 import { withFormik, Field, Form } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
 
-import "./App.css";
+import Axios from "axios";
 
 /**
  *
@@ -21,28 +21,44 @@ import "./App.css";
  * *todo: create privateRoute
  *    *todo: check local storage for token
  *      *todo: if no token send to login
- * todo: create protectedRoute
- *    todo: if not logged in redirect to login
+ * *todo: create protected route
+ *    *todo: if not logged in redirect to login
  *
- * todo: make FriendsList component
- *    todo: render inside protectedRoute
- *    todo: render friends given from api
+ * *todo: make FriendsList component
+ *    *todo: render inside protectedRoute
+ *    *todo: render friends given from api
  *
  * todo: create addFriends form
  *    todo: send post with data
  *    todo: data shape {id, name, age, email}
  */
 
+const withAxiosAuth = () => {
+  const token = localStorage.getItem("token");
+  return Axios.create({
+    headers: {
+      "Content-type": "application/json",
+      Authorization: `${token}`
+    }
+  });
+};
+
 function App() {
   return (
     <Router>
       <div className="App">
         {/* TODO: add route to login */}
-        <Link to="/login" >Login</Link>
-        <Link to="/friends" >Friends</Link>
+        <nav className="navigation">
+          <NavLink to="/login" className="navigation-link">
+            Login
+          </NavLink>
+          <NavLink to="/friends" className="navigation-link">
+            Friends
+          </NavLink>
+        </nav>
 
         <Route path="/login" component={FormikLoginForm} />
-        <PrivateRoute path="/friends" component={() => <p>Hi</p>} />
+        <PrivateRoute path="/friends" component={FriendsList} />
       </div>
     </Router>
   );
@@ -54,19 +70,60 @@ const PrivateRoute = ({ component: Component, ...rest }) => {
       {...rest}
       render={props => {
         const token = localStorage.getItem("token");
-        return token ? <Component {...props} /> : <Redirect to="/login" />;
+        return token ? (
+          <Component {...props} token={token} />
+        ) : (
+          <Redirect to="/login" />
+        );
       }}
     />
   );
 };
 
+const FriendsList = () => {
+  const friendsPath = "http://localhost:5000/api/friends";
+  const [friends, setFriends] = useState([]);
+  useEffect(() => {
+    const fetchData = async () => {
+      const promise = withAxiosAuth().get(friendsPath);
+      const response = await promise;
+      setFriends(response.data);
+    };
+    fetchData();
+  }, []);
+  const friendsList = friends.map(({ name, age, email, id }) => (
+    <section className="friend" key={id} id={id}>
+      <section className="friend-name">
+        <p>{name}</p>
+      </section>
+      <section className="friend-info">
+        <section className="friend-age">
+          <span>Age:</span> <span>{age}</span>
+        </section>
+        <section className="friend-email">
+          <span>Email:</span> <span>{email}</span>
+        </section>
+      </section>
+    </section>
+  ));
+  return (
+    <section className="friends-list">
+      <h3>Friends</h3>
+      {friendsList}
+    </section>
+  );
+};
+
 const loginForm = props => {
   return (
-    <Form>
-      <Field type="text" name="username" placeholder="Username" />
-      <Field type="password" name="password" placeholder="Password" />
-      <button type="submit">Login</button>
-    </Form>
+    <section className="login-form">
+      <Form>
+        <h3>Login</h3>
+        <Field type="text" name="username" placeholder="Username" />
+        <Field type="password" name="password" placeholder="Password" />
+        <button type="submit">Login</button>
+      </Form>
+    </section>
   );
 };
 
