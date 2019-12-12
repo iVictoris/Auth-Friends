@@ -1,21 +1,26 @@
 import React from "react";
-import { BrowserRouter as Router, Route } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Route,
+  Redirect,
+  Link
+} from "react-router-dom";
 import { withFormik, Field, Form } from "formik";
 import * as Yup from "yup";
-import axios from 'axios';
+import axios from "axios";
 
 import "./App.css";
 
 /**
  *
- * todo: add route to login
- * todo: make login component
- *    todo: receive token and use LocalStorage to save token
- *    todo: history push to friends list
+ * *todo: add route to login
+ * *todo: make login component
+ *    *todo: receive token and use LocalStorage to save token
+ *    *todo: history push to friends list
  *
- * todo: create privateRoute
- *    todo: check local storage for token
- *      todo: if no token send to login
+ * *todo: create privateRoute
+ *    *todo: check local storage for token
+ *      *todo: if no token send to login
  * todo: create protectedRoute
  *    todo: if not logged in redirect to login
  *
@@ -33,18 +38,34 @@ function App() {
     <Router>
       <div className="App">
         {/* TODO: add route to login */}
+        <Link to="/login" >Login</Link>
+        <Link to="/friends" >Friends</Link>
+
         <Route path="/login" component={FormikLoginForm} />
+        <PrivateRoute path="/friends" component={() => <p>Hi</p>} />
       </div>
     </Router>
   );
 }
+
+const PrivateRoute = ({ component: Component, ...rest }) => {
+  return (
+    <Route
+      {...rest}
+      render={props => {
+        const token = localStorage.getItem("token");
+        return token ? <Component {...props} /> : <Redirect to="/login" />;
+      }}
+    />
+  );
+};
 
 const loginForm = props => {
   return (
     <Form>
       <Field type="text" name="username" placeholder="Username" />
       <Field type="password" name="password" placeholder="Password" />
-      <button type='submit'>Login</button>
+      <button type="submit">Login</button>
     </Form>
   );
 };
@@ -62,17 +83,18 @@ const FormikLoginForm = withFormik({
     password: Yup.string().required("Password is required to submit form")
   }),
 
-  async handleSubmit({ username, password }, formikBag) {
+  async handleSubmit({ username, password }, { props }) {
     const user = {
       username,
       password
     };
 
-    const loginPath = `http://localhost:5000/api/login`
+    const loginPath = `http://localhost:5000/api/login`;
 
     const promise = axios.post(loginPath, user);
-    const {data} = await promise;
-    localStorage.setItem('token', data.payload);
+    const { data } = await promise;
+    localStorage.setItem("token", data.payload);
+    props.history.push("/friends");
   }
 })(loginForm);
 
