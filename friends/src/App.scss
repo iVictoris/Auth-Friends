@@ -34,13 +34,21 @@
   }
 }
 
-.friends-list {
-  display: flex;
-  flex-flow: column;
-  align-items: center;
+.friends {
+
   h3 {
+    display: flex;
+    justify-content: center;
     margin-bottom: 1%;
     font-size: 2rem;
+  }
+
+  &-list {
+    display: flex;
+    flex-flow: column;
+    align-items: center;
+    overflow-y: scroll;
+    max-height: 50vh;
   }
 }
 
@@ -62,7 +70,8 @@
   }
 }
 
-.login-form {
+.login-form,
+.add-form {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -86,13 +95,12 @@
     margin-bottom: 3%;
     font-size: 1.5rem;
     width: 80%;
-    border-radius: .5rem;
+    border-radius: 0.5rem;
   }
 
   button {
     padding: 1% 4%;
-    border-radius: .5rem;
+    border-radius: 0.5rem;
     font-size: 1.5rem;
   }
 }
-
