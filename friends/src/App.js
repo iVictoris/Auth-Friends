@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, createContext } from "react";
 import {
   BrowserRouter as Router,
   Route,
@@ -28,9 +28,9 @@ import Axios from "axios";
  *    *todo: render inside protectedRoute
  *    *todo: render friends given from api
  *
- * todo: create addFriends form
- *    todo: send post with data
- *    todo: data shape {id, name, age, email}
+ * *todo: create addFriends form
+ *    *todo: send post with data
+ *    *todo: data shape {id, name, age, email}
  */
 
 const withAxiosAuth = () => {
@@ -43,22 +43,47 @@ const withAxiosAuth = () => {
   });
 };
 
-function App() {
+function App(props) {
+  const token = localStorage.getItem("token");
+  const [isLoggedIn, setIsLoggedIn] = useState(!!token);
+  useEffect(() => {
+    setIsLoggedIn(!!token)
+  }, [token]);
   return (
     <Router>
       <div className="App">
         {/* TODO: add route to login */}
         <nav className="navigation">
-          <NavLink to="/login" className="navigation-link">
-            Login
-          </NavLink>
+          {!isLoggedIn && (
+            <NavLink to="/login" className="navigation-link">
+              Login
+            </NavLink>
+          )}
           <NavLink to="/friends" className="navigation-link">
             Friends
           </NavLink>
+          {isLoggedIn && (
+            <NavLink to="/add" className="navigation-link">
+              Add Friend
+            </NavLink>
+          )}
+
+          {isLoggedIn && (
+            <NavLink
+              to="/login"
+              className="navigation-link"
+              onClick={() => {
+                localStorage.removeItem("token");
+              }}
+            >
+              Logout
+            </NavLink>
+          )}
         </nav>
 
         <Route path="/login" component={FormikLoginForm} />
         <PrivateRoute path="/friends" component={FriendsList} />
+        <PrivateRoute path="/add" component={FormikAddFriendForm} />
       </div>
     </Router>
   );
@@ -107,9 +132,11 @@ const FriendsList = () => {
     </section>
   ));
   return (
-    <section className="friends-list">
+    <section className="friends">
       <h3>Friends</h3>
-      {friendsList}
+      {!!friends.length && (
+        <section className="friends-list">{friendsList}</section>
+      )}
     </section>
   );
 };
@@ -154,5 +181,48 @@ const FormikLoginForm = withFormik({
     props.history.push("/friends");
   }
 })(loginForm);
+
+const AddForm = props => {
+  return (
+    <section className="add-form">
+      <Form>
+        <h3>Add</h3>
+        <Field type="text" name="name" placeholder="Name" />
+        <Field type="text" name="age" placeholder="Age" />
+        <Field type="text" name="email" placeholder="Email" />
+        <button type="submit">Add Friend</button>
+      </Form>
+    </section>
+  );
+};
+
+const FormikAddFriendForm = withFormik({
+  mapPropsToValues({ name, age, email }) {
+    return {
+      name: name || "",
+      age: age || "",
+      email: email || ""
+    };
+  },
+
+  validateYupSchema: Yup.object().shape({
+    name: Yup.string().required("Name is required to submit form"),
+    age: Yup.string().required("Age is required to submit form"),
+    email: Yup.string().required("Email is required to submit form")
+  }),
+
+  async handleSubmit({ name, age, email }, { props }) {
+    const user = {
+      name,
+      age,
+      email
+    };
+
+    const addPath = `http://localhost:5000/api/friends`;
+
+    await withAxiosAuth().post(addPath, user);
+    props.history.push("/friends");
+  }
+})(AddForm);
 
 export default App;
